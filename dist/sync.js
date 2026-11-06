@@ -46,4 +46,41 @@ const originalImportClick=$('import').onclick;$('import').onclick=()=>{if(cloud)
 // El respaldo excluye la clave de conexión y conserva las operaciones pendientes.
 $('export').onclick=()=>{const snapshot=structuredClone(data);const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`bolsillo-respaldo-${localDate()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 window.addEventListener('storage',e=>{if(e.key===CLOUD_KEY){try{cloud=JSON.parse(e.newValue||'null')}catch{cloud=null}cloudStatus()}});
-cloudStatus();if(cloud)syncCloud(false);
+function connectionFromLink(hash){
+  const raw=new URLSearchParams(hash.replace(/^#/,'' )).get('conectar');
+  if(!raw)return null;
+  if(raw.length>2000)throw Error('Enlace de conexión inválido.');
+  const config=JSON.parse(atob(raw.replace(/-/g,'+').replace(/_/g,'/')));
+  const url=new URL(config.url);
+  if(url.origin!=='https://script.google.com'||!/^\/macros\/s\/[a-zA-Z0-9_-]+\/exec$/.test(url.pathname)||url.search||url.hash||typeof config.key!=='string'||config.key.length<24||config.key.length>200)throw Error('Enlace de conexión inválido.');
+  return {url:url.href,key:config.key};
+}
+function activateConnectionLink(){
+  if(typeof location==='undefined'||!new URLSearchParams(location.hash.replace(/^#/,'' )).has('conectar'))return;
+  const hash=location.hash;
+  // El secreto se retira de la barra y del historial de esta página antes de conectar.
+  history.replaceState(null,'',location.pathname+location.search);
+  try{
+    const config=connectionFromLink(hash);
+    if(cloud&&(cloud.url!==config.url||cloud.key!==config.key))throw Error('Este navegador ya tiene otra conexión. Desconéctala antes de usar este enlace.');
+    if(!cloud){
+      const next=structuredClone(data);
+      next._pending=operationsBetween({entries:[],budgets:{}},data);
+      if(!originalPersist(next))return;
+      localStorage.setItem(CLOUD_KEY,JSON.stringify(config));cloud=config;
+    }
+  }catch(error){return error.message;}
+}
+const connectionError=activateConnectionLink();cloudStatus(connectionError);if(cloud)syncCloud(false);
+
+// Este enlace se crea en el navegador; nunca se guarda en el código publicado.
+const pairingButton=document.createElement('button');
+pairingButton.type='button';pairingButton.className='textbtn';pairingButton.textContent='Copiar enlace privado para otro dispositivo';
+$('cloudForm').append(pairingButton);
+pairingButton.onclick=async()=>{
+  if(!cloud){alert('Este navegador todavía no tiene una conexión guardada.');return}
+  const encoded=btoa(JSON.stringify(cloud)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const url=location.origin+location.pathname+'#conectar='+encoded;
+  try{await navigator.clipboard.writeText(url);pairingButton.textContent='Enlace copiado · úsalo solo en tus dispositivos';}
+  catch{prompt('Enlace privado: quien lo tenga podrá acceder a tus gastos. Cópialo solo para tus dispositivos.',url);}
+};

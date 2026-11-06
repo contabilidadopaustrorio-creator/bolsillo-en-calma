@@ -64,3 +64,7 @@ No necesita dependencias ni compilación. Servir `dist/` con un servidor HTTP; p
 Documentación de referencia:
 - Apps Script Web Apps: https://developers.google.com/apps-script/guides/web
 - GitHub Pages con Actions: https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages
+
+## Conectar otro dispositivo sin copiar datos
+
+En un navegador ya conectado, abre Conectar Sheets y pulsa **Copiar enlace privado para otro dispositivo**. Al abrir ese enlace en tu celular, la app guarda la conexión y consulta Sheets automáticamente. El enlace contiene una credencial privada: úsalo solo en tus dispositivos y no lo publiques. Se retira de la barra de direcciones al abrirse. Tus registros locales se conservan como pendientes si existían antes de conectar.

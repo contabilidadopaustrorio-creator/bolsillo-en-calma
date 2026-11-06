@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 process.chdir(path.join(__dirname,'..'));
-const elements={},el=id=>elements[id]??={value:'',textContent:'',innerHTML:'',style:{},addEventListener(){},showModal(){},close(){}};
+const elements={},el=id=>elements[id]??={value:'',textContent:'',innerHTML:'',style:{},append(){},addEventListener(){},showModal(){},close(){}};
 el('filter').value='all';el('category').value='super';
-const storage=new Map(),ctx={document:{getElementById:el,querySelectorAll:()=>[]},window:{addEventListener(){}},navigator:{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},Intl,Date,Math,Number,JSON,console,structuredClone,crypto:require('node:crypto').webcrypto,alert(){},confirm:()=>true};
+const storage=new Map(),ctx={document:{getElementById:el,querySelectorAll:()=>[],createElement:()=>({})},window:{addEventListener(){}},navigator:{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},URL,URLSearchParams,atob,btoa,Intl,Date,Math,Number,JSON,console,structuredClone,crypto:require('node:crypto').webcrypto,alert(){},confirm:()=>true};
 vm.createContext(ctx);for(const f of ['app.js','sync.js'])vm.runInContext(fs.readFileSync('dist/'+f,'utf8'),ctx);
 vm.runInContext(`
 const check=(ok,msg)=>{if(!ok)throw Error(msg)};
@@ -13,6 +13,11 @@ check(totals().ocio===6500&&$('status').innerHTML.includes('cerca del límite'),
 $('amount').value='15';$('expenseForm').onsubmit({preventDefault(){}});check($('status').innerHTML.includes('pausa las salidas'),'limit alert');
 $('amount').value='5';$('expenseForm').onsubmit({preventDefault(){}});check($('status').innerHTML.includes('Se pasaron'),'overspend');
 $('month').value='2020-01';render();check(totals().ocio===0,'monthly isolation');
+const config={url:'https://script.google.com/macros/s/test-deployment/exec',key:'test-key-that-is-long-enough'};
+const encoded=btoa(JSON.stringify(config)).replace(/=/g,'');
+check(connectionFromLink('#conectar='+encoded).key===config.key,'private activation link');
+let blocked=false;try{connectionFromLink('#conectar='+btoa(JSON.stringify({...config,url:'https://example.com/steal'})))}catch{blocked=true}
+check(blocked,'reject untrusted activation origin');
 const empty={version:1,entries:[],budgets:{}};
 const sample={version:1,entries:[{id:'entry-1',amount:1234,category:'super',date:'2026-11-05',note:'Test'}],budgets:{'2026-11':{super:12000,ocio:8000}}};
 const ops=operationsBetween(empty,sample);check(ops.length===2,'addition and budget diff');
