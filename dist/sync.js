@@ -77,10 +77,14 @@ const connectionError=activateConnectionLink();cloudStatus(connectionError);if(c
 const pairingButton=document.createElement('button');
 pairingButton.type='button';pairingButton.className='textbtn';pairingButton.textContent='Copiar enlace privado para otro dispositivo';
 $('cloudForm').append(pairingButton);
+const pairingLink=document.createElement('a');
+pairingLink.className='textbtn';pairingLink.textContent='Abrir con conexión automática';pairingLink.hidden=true;
+pairingLink.style.display='none';$('cloudForm').append(pairingLink);
 pairingButton.onclick=async()=>{
   if(!cloud){alert('Este navegador todavía no tiene una conexión guardada.');return}
   const encoded=btoa(JSON.stringify(cloud)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   const url=location.origin+location.pathname+'#conectar='+encoded;
+  pairingLink.href=url;pairingLink.hidden=false;pairingLink.style.display='block';
   try{await navigator.clipboard.writeText(url);pairingButton.textContent='Enlace copiado · úsalo solo en tus dispositivos';}
   catch{prompt('Enlace privado: quien lo tenga podrá acceder a tus gastos. Cópialo solo para tus dispositivos.',url);}
 };

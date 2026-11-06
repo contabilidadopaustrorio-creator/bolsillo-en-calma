@@ -2,7 +2,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 process.chdir(path.join(__dirname,'..'));
 const elements={},el=id=>elements[id]??={value:'',textContent:'',innerHTML:'',style:{},append(){},addEventListener(){},showModal(){},close(){}};
 el('filter').value='all';el('category').value='super';
-const storage=new Map(),ctx={document:{getElementById:el,querySelectorAll:()=>[],createElement:()=>({})},window:{addEventListener(){}},navigator:{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},URL,URLSearchParams,atob,btoa,Intl,Date,Math,Number,JSON,console,structuredClone,crypto:require('node:crypto').webcrypto,alert(){},confirm:()=>true};
+const storage=new Map(),ctx={document:{getElementById:el,querySelectorAll:()=>[],createElement:()=>({style:{}})},window:{addEventListener(){}},navigator:{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},URL,URLSearchParams,atob,btoa,Intl,Date,Math,Number,JSON,console,structuredClone,crypto:require('node:crypto').webcrypto,alert(){},confirm:()=>true};
 vm.createContext(ctx);for(const f of ['app.js','sync.js'])vm.runInContext(fs.readFileSync('dist/'+f,'utf8'),ctx);
 vm.runInContext(`
 const check=(ok,msg)=>{if(!ok)throw Error(msg)};
