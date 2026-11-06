@@ -1,3 +1,13 @@
+# Acceso de la aplicación publicada
+
+La aplicación personal publicada ahora utiliza una conexión a Google Sheets configurada en el servidor privado. En el celular no se introduce URL ni clave de Sheets.
+
+Abre `app.html` en GitHub Pages: te llevará a la aplicación privada. Si pide iniciar sesión, usa la misma cuenta de ChatGPT propietaria de la app. El repositorio público no contiene la clave, los gastos ni el identificador de la hoja.
+
+`local.html` conserva la versión anterior para recuperar respaldos de registros guardados en el navegador. Las instrucciones de Apps Script que siguen se conservan como plantilla técnica para configurar una instancia independiente; no son pasos necesarios para la app personal ya publicada.
+
+---
+
 # Bolsillo en calma
 
 PWA en español para registrar dos gastos mensuales: súper ($130) y distracciones ($80). Los límites se pueden ajustar por mes. Alertas al 80% y al agotar cada categoría.
