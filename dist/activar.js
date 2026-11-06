@@ -20,6 +20,6 @@
     }
     message.textContent='Conexión guardada. Abriendo tu dashboard…';
     // El fragmento fuerza también el envío de cualquier cambio local pendiente.
-    location.replace('./?inicio=conectado#conectar='+raw);
+    location.replace('./?inicio=conectado&v=4#conectar='+raw);
   }catch(error){message.textContent=error.message+' No necesitas llenar los campos manualmente.';}
 })();
