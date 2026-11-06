@@ -14,7 +14,7 @@ persist=function(next){
   if(cloud){next._pending=[...(data._pending||[]),...operationsBetween(data,next)];}
   const ok=originalPersist(next);if(ok&&cloud){cloudStatus();syncCloud(true);}return ok;
 };
-function cloudStatus(message){const n=(data._pending||[]).length;$('cloudState').textContent=message||(cloud?(n?`${n} cambio(s) pendiente(s) de enviar`:'Conectado · copia local disponible'):'Solo en este dispositivo · Sheets sin conectar');$('syncNow').hidden=!cloud;}
+function cloudStatus(message){const n=(data._pending||[]).length;$('cloudState').textContent=message||(cloud?(n?`${n} cambio(s) pendiente(s) de enviar`:'Conectado · copia local disponible'):'Solo en este dispositivo · Sheets sin conectar');$('syncNow').hidden=!cloud;$('cloudSettings').textContent=cloud?'Configurar conexión':'Conectar Sheets';}
 function applyOps(state,ops){const next=structuredClone(state);for(const op of ops){if(op.type==='add'&&!next.entries.some(e=>e.id===op.payload.id))next.entries.push(op.payload);else if(op.type==='delete')next.entries=next.entries.filter(e=>e.id!==op.payload.id);else if(op.type==='budget'){const {month,...b}=op.payload;next.budgets[month]=b}}return next}
 async function syncCloud(send){
   if(!cloud||busy)return;busy=true;$('syncNow').disabled=true;cloudStatus('Conectando con tu hoja…');
@@ -88,7 +88,7 @@ pairingLink.style.display='none';$('cloudForm').append(pairingLink);
 pairingButton.onclick=async()=>{
   if(!cloud){alert('Este navegador todavía no tiene una conexión guardada.');return}
   const encoded=btoa(JSON.stringify(cloud)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  const url=location.origin+location.pathname+'#conectar='+encoded;
+  const url=new URL('conectar.html',location.href).href.split('#')[0]+'#conectar='+encoded;
   pairingLink.href=url;pairingLink.hidden=false;pairingLink.style.display='block';
   try{await navigator.clipboard.writeText(url);pairingButton.textContent='Enlace copiado · úsalo solo en tus dispositivos';}
   catch{prompt('Enlace privado: quien lo tenga podrá acceder a tus gastos. Cópialo solo para tus dispositivos.',url);}
