@@ -72,6 +72,10 @@ function activateConnectionLink(){
   }catch(error){return error.message;}
 }
 const connectionError=activateConnectionLink();cloudStatus(connectionError);if(cloud)syncCloud(false);
+window.addEventListener('hashchange',()=>{
+  if(!new URLSearchParams(location.hash.replace(/^#/,'' )).has('conectar'))return;
+  const error=activateConnectionLink();cloudStatus(error);if(cloud&&!error)syncCloud(false);
+});
 
 // Este enlace se crea en el navegador; nunca se guarda en el código publicado.
 const pairingButton=document.createElement('button');
