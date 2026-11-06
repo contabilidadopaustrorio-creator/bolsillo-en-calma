@@ -71,10 +71,11 @@ function activateConnectionLink(){
     }
   }catch(error){return error.message;}
 }
-const connectionError=activateConnectionLink();cloudStatus(connectionError);if(cloud)syncCloud(false);
+const openedActivationLink=typeof location!=='undefined'&&new URLSearchParams(location.hash.replace(/^#/,'' )).has('conectar');
+const connectionError=activateConnectionLink();cloudStatus(connectionError);if(cloud)syncCloud(openedActivationLink&&!connectionError);
 window.addEventListener('hashchange',()=>{
   if(!new URLSearchParams(location.hash.replace(/^#/,'' )).has('conectar'))return;
-  const error=activateConnectionLink();cloudStatus(error);if(cloud&&!error)syncCloud(false);
+  const error=activateConnectionLink();cloudStatus(error);if(cloud&&!error)syncCloud(true);
 });
 
 // Este enlace se crea en el navegador; nunca se guarda en el código publicado.
