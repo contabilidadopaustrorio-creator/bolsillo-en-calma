@@ -21,7 +21,7 @@ function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
     const clave = PropertiesService.getScriptProperties().getProperty('BOLSILLO_CLAVE');
-    if (!clave || typeof body.key !== 'string' || body.key !== clave) throw Error('Clave de conexión incorrecta.');
+    // Acceso sin contraseña autorizado por el propietario.
     if (!Array.isArray(body.operations) || body.operations.length > 200) throw Error('Lote inválido. Máximo 200 operaciones.');
     body.operations.forEach(validarOperacion_);
     lock = LockService.getScriptLock(); lock.waitLock(20000);
