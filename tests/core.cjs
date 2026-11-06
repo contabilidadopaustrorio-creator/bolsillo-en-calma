@@ -1,0 +1,41 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+process.chdir(path.join(__dirname,'..'));
+const elements={},el=id=>elements[id]??={value:'',textContent:'',innerHTML:'',style:{},addEventListener(){},showModal(){},close(){}};
+el('filter').value='all';el('category').value='super';
+const storage=new Map(),ctx={document:{getElementById:el,querySelectorAll:()=>[]},window:{addEventListener(){}},navigator:{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},Intl,Date,Math,Number,JSON,console,structuredClone,crypto:require('node:crypto').webcrypto,alert(){},confirm:()=>true};
+vm.createContext(ctx);for(const f of ['app.js','sync.js'])vm.runInContext(fs.readFileSync('dist/'+f,'utf8'),ctx);
+vm.runInContext(`
+const check=(ok,msg)=>{if(!ok)throw Error(msg)};
+check(budget().super===13000&&budget().ocio===8000,'default budgets');
+const m=$('month').value;
+$('category').value='ocio';$('amount').value='65';$('date').value=m+'-02';$('note').value='Cine';$('expenseForm').onsubmit({preventDefault(){}});
+check(totals().ocio===6500&&$('status').innerHTML.includes('cerca del límite'),'80% alert');
+$('amount').value='15';$('expenseForm').onsubmit({preventDefault(){}});check($('status').innerHTML.includes('pausa las salidas'),'limit alert');
+$('amount').value='5';$('expenseForm').onsubmit({preventDefault(){}});check($('status').innerHTML.includes('Se pasaron'),'overspend');
+$('month').value='2020-01';render();check(totals().ocio===0,'monthly isolation');
+const empty={version:1,entries:[],budgets:{}};
+const sample={version:1,entries:[{id:'entry-1',amount:1234,category:'super',date:'2026-11-05',note:'Test'}],budgets:{'2026-11':{super:12000,ocio:8000}}};
+const ops=operationsBetween(empty,sample);check(ops.length===2,'addition and budget diff');
+check(JSON.stringify(applyOps(empty,ops))===JSON.stringify(sample),'apply operations');
+check(applyOps(applyOps(empty,ops),ops).entries.length===1,'idempotent client merge');
+const del=operationsBetween(sample,{...sample,entries:[]});check(del.length===1&&del[0].type==='delete','delete diff');
+check(applyOps(sample,del).entries.length===0,'apply deletion');
+check(!validData({version:1,entries:[{amount:-1}],budgets:{}}),'invalid import');
+check(escapeHTML('<script>')==='&lt;script&gt;','safe HTML');
+`,ctx);
+// Real server handlers with a minimal in-memory Apps Script adapter.
+let rows=[['ID','Acción','JSON','UTC']],locked=false;
+const log={getLastRow:()=>rows.length,getRange:(start,col,count,width)=>({getValues:()=>rows.slice(start-1,start-1+count).map(r=>r.slice(col-1,col-1+width)),setValues:values=>values.forEach((r,i)=>rows[start-1+i]=r)})};
+const server={PropertiesService:{getScriptProperties:()=>({getProperty:()=> 'test-key-that-is-long-enough'})},LockService:{getScriptLock:()=>({waitLock(){locked=true},hasLock:()=>locked,releaseLock(){locked=false}})},SpreadsheetApp:{openById:()=>({getSheetByName:()=>log})},ContentService:{MimeType:{JSON:'json'},createTextOutput:text=>({setMimeType:()=>text})},Utilities:{},console};
+vm.createContext(server);vm.runInContext(fs.readFileSync('google-apps-script/Code.gs','utf8'),server);vm.runInContext('actualizarVistas_=function(){}',server);
+function post(operations,key='test-key-that-is-long-enough'){return JSON.parse(server.doPost({postData:{contents:JSON.stringify({key,operations})}}))}
+const entry={id:'entry-1',amount:1200,category:'ocio',date:'2026-11-05',note:'=formula'};
+const add={id:'operation-1',type:'add',payload:entry};
+assert.equal(post([], 'wrong-key').ok,false);assert.equal(rows.length,1);
+assert.equal(post([add]).data.entries.length,1);assert.equal(post([add]).data.entries.length,1);assert.equal(rows.length,2,'retry must not append twice');
+assert.equal(post([{id:'operation-2',type:'delete',payload:{id:entry.id}}]).data.entries.length,0);
+assert.equal(post([{...add,id:'operation-late'}]).data.entries.length,0,'late add cannot resurrect deleted ID');
+assert.equal(post([{id:'budget-1',type:'budget',payload:{month:'2026-11',super:13000,ocio:8000}}]).data.budgets['2026-11'].ocio,8000);
+assert.equal(post([{id:'invalid',type:'add',payload:{...entry,date:'2026-02-31'}}]).ok,false);
+assert.equal(server.texto_('=formula'),"'=formula");assert.equal(locked,false);
+console.log('PASS: budgets, alerts, monthly isolation, input validation, operation diffs, merge, server authentication, retry deduplication, delete tombstones, server lock, formula escaping');
